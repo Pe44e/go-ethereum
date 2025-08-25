@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/metrics"
 )
 
@@ -110,8 +111,31 @@ func (s *WitnessStats) Add(nodes map[string][]byte, owner common.Hash) {
 	}
 }
 
-// ReportMetrics reports the collected statistics to the global metrics registry.
-func (s *WitnessStats) ReportMetrics() {
+// ReportMetrics logs the collected statistics to the console and reports them to the metrics registry.
+func (s *WitnessStats) ReportMetrics(blockNumber uint64) {
+	// Log account trie depth statistics
+	if s.accountTrie.samples > 0 {
+		avgDepth := s.accountTrie.totalDepth / s.accountTrie.samples
+		log.Info("Account trie depth stats",
+			"block", blockNumber,
+			"samples", s.accountTrie.samples,
+			"min", s.accountTrie.minDepth,
+			"max", s.accountTrie.maxDepth,
+			"avg", avgDepth)
+	}
+
+	// Log storage trie depth statistics
+	if s.storageTrie.samples > 0 {
+		avgDepth := s.storageTrie.totalDepth / s.storageTrie.samples
+		log.Info("Storage trie depth stats",
+			"block", blockNumber,
+			"samples", s.storageTrie.samples,
+			"min", s.storageTrie.minDepth,
+			"max", s.storageTrie.maxDepth,
+			"avg", avgDepth)
+	}
+
+	// Report to metrics registry as well
 	s.accountTrie.report(accountTrieDepthMax, accountTrieDepthMin, accountTrieDepthAvg)
 	s.storageTrie.report(storageTrieDepthMax, storageTrieDepthMin, storageTrieDepthAvg)
 }
